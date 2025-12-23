@@ -10,14 +10,14 @@ from src.api.model_loader import ModelLoader
 
 
 # Define the loader class
-loader = ModelLoader()
-
+loader = None
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Define the Lifespan Context Manager"""
+    global loader
     print("Loading model...")
-    loader.get_instance()
+    loader = ModelLoader().get_instance()
     yield # The application runs while waiting here    
     print("Shutting down...")
 

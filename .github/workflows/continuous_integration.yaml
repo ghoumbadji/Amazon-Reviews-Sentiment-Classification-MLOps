@@ -26,6 +26,7 @@ jobs:
           pip install --upgrade pip
           pip install -r requirements/requirements_utils.txt
           pip install -r requirements/requirements_data.txt
+          pip install -r requirements/requirements_model.txt
           pip install -r requirements/requirements_api.txt
           pip install pytest flake8 httpx
 
@@ -46,4 +47,4 @@ jobs:
           AWS_DEFAULT_REGION: us-east-1
           BUCKET_NAME: test-bucket
         run: |
-          pytest -m src/tests
+          pytest -m tests/

@@ -31,6 +31,22 @@ class PredictionRequest(BaseModel):
     content: str
 
 
+# Endpoint Root
+@app.get("/", tags=["General"])
+def read_root():
+    """Root endpoint to guide the user."""
+    return {
+        "message": "Welcome to the Sentiment Analysis API.",
+        "documentation": "Please consult '/docs' for interactive Swagger UI documentation.",
+        "status": "alive",
+        "available_endpoints": {
+            "/health": "GET - Check if the model is loaded.",
+            "/predict": "POST - Send text content to get sentiment prediction.",
+            "/metrics": "GET - View model performance metrics.",
+            "/train": "POST - Trigger the training pipeline (Background Task)."
+        }
+    }
+
 # Endpoint Health
 @app.get("/health")
 def health_check():

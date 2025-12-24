@@ -10,9 +10,10 @@ def analyze_sentiment(review_title, review_content):
     combined_text = f"{review_title} {review_content}"
     payload = {"content": combined_text}
     if not API_URL: 
-        return "**Sentiment: None**", "**Confidence Score: None**"
+        return "**API_URL not found in the environment.**"
     try:
-        response = requests.post(API_URL, json=payload)
+        predict_url = f"{API_URL}/predict"
+        response = requests.post(predict_url, json=payload)
         if response.status_code == 200:
             result = response.json()
             prediction = result.get("label", "Unknown")

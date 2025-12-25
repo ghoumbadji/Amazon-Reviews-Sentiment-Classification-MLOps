@@ -44,10 +44,10 @@ jobs:
         if: ${{ inputs.run_data_pipeline == true }}
         run: python3 -m src.data.data_pipeline
         env:
-            BUCKET_NAME: ${{ vars.BUCKET_NAME }}
+            BUCKET_NAME: "s3-${{ vars.GROUP_NAME }}"
 
       - name: Run Model Training
         if: ${{ inputs.run_model_pipeline == true }}
         run: python3 -m src.model.model_pipeline
         env:
-            BUCKET_NAME: ${{ vars.BUCKET_NAME }}
+            BUCKET_NAME: "s3-${{ vars.GROUP_NAME }}"

@@ -1,41 +1,86 @@
-name: CD Pipeline (Build & Push)
+name: CD Pipeline (Build & Deploy App)
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - main
 
 jobs:
-  deploy-images:
+  build-and-push:
+    name: Build & Push Images
     runs-on: ubuntu-latest
-    
+
+    env:
+      AWS_REGION: ${{ secrets.AWS_REGION }}
+      ECR_REPO_API: "ecr-${{ vars.GROUP_NAME }}-api"
+      ECR_REPO_FRONTEND: "ecr-${{ vars.GROUP_NAME }}-frontend"
+
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v2
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ secrets.AWS_REGION }}
+          aws-region: ${{ env.AWS_REGION }}
 
       - name: Login to Amazon ECR
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
 
-      - name: Build, tag, and push API image to Amazon ECR
+      - name: Build and Push API
         env:
-          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          ECR_REPOSITORY_API: ${{ vars.ECR_REPOSITORY_API }}
-          IMAGE_TAG: latest
+          REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          TAG: latest
         run: |
-          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY_API:$IMAGE_TAG -f Dockerfile.api .
-          docker push $ECR_REGISTRY/$ECR_REPOSITORY_API:$IMAGE_TAG
+          docker build -t $REGISTRY/$ECR_REPO_API:$TAG -f Dockerfile.api .
+          docker push $REGISTRY/$ECR_REPO_API:$TAG
 
-      - name: Build, tag, and push Frontend image to Amazon ECR
+      - name: Build and Push Frontend
         env:
-          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          ECR_REPOSITORY_FRONTEND: ${{ vars.ECR_REPOSITORY_FRONTEND }}
-          IMAGE_TAG: latest
+          REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          TAG: latest
         run: |
-          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY_FRONTEND:$IMAGE_TAG -f Dockerfile.frontend .
-          docker push $ECR_REGISTRY/$ECR_REPOSITORY_FRONTEND:$IMAGE_TAG
+          docker build -t $REGISTRY/$ECR_REPO_FRONTEND:$TAG -f Dockerfile.frontend .
+          docker push $REGISTRY/$ECR_REPO_FRONTEND:$TAG
+
+  deploy-app-runner:
+    name: Deploy App Services (Terraform)
+    needs: build-and-push
+    runs-on: ubuntu-latest
+
+    env:
+      AWS_REGION: ${{ secrets.AWS_REGION }}
+      GROUP_NAME: ${{ vars.GROUP_NAME }}
+      TF_VAR_group_name: ${{ vars.GROUP_NAME }}
+      TF_VAR_aws_region: ${{ secrets.AWS_REGION }}
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: 1.5.0
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Terraform Init
+        run: |
+          terraform init \
+            -backend-config="bucket=terraform-state-${{ env.GROUP_NAME }}" \
+            -backend-config="region=${{ env.AWS_REGION }}"
+        working-directory: ./terraform/app
+
+      - name: Terraform Apply
+        run: terraform apply -auto-approve -input=false
+        working-directory: ./terraform/app

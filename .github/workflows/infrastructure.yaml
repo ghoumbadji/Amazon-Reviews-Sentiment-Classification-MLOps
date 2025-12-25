@@ -1,0 +1,74 @@
+name: Deploy Base Infrastructure
+
+on:
+  workflow_dispatch:
+    inputs:
+      only_plan:
+        description: "Run Terraform Plan only? (Dry Run)"
+        required: true
+        default: false
+        type: boolean
+
+jobs:
+  terraform-infra:
+    name: Deploy Infra (S3, ECR, IAM)
+    runs-on: ubuntu-latest
+    env:
+      AWS_REGION: ${{ secrets.AWS_REGION }}
+      GROUP_NAME: ${{ vars.GROUP_NAME }}
+      TF_VAR_group_name: ${{ vars.GROUP_NAME }}
+      TF_VAR_aws_region: ${{ secrets.AWS_REGION }}
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: 1.5.0
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Ensure Backend Bucket Exists
+        run: |
+          BUCKET_NAME="terraform-state-${{ env.GROUP_NAME }}"
+          echo "Checking bucket: $BUCKET_NAME in region ${{ env.AWS_REGION }}"
+
+          # Create bucket if not exists
+          aws s3api create-bucket \
+            --bucket $BUCKET_NAME \
+            --region ${{ env.AWS_REGION }} \
+            --create-bucket-configuration LocationConstraint=${{ env.AWS_REGION }} \
+            2>/dev/null || echo "Bucket already exists."
+            
+          # Enable versioning
+          aws s3api put-bucket-versioning \
+            --bucket $BUCKET_NAME \
+            --versioning-configuration Status=Enabled
+
+      - name: Terraform Init
+        run: |
+          terraform init \
+            -backend-config="bucket=terraform-state-${{ env.GROUP_NAME }}" \
+            -backend-config="region=${{ env.AWS_REGION }}"
+        working-directory: ./terraform/infra
+
+      - name: Terraform Format Check
+        run: terraform fmt -check
+        working-directory: ./terraform/infra
+
+      - name: Terraform Plan
+        id: plan
+        run: terraform plan -input=false
+        working-directory: ./terraform/infra
+
+      - name: Terraform Apply
+        if: ${{ inputs.only_plan == false }}
+        run: terraform apply -auto-approve -input=false
+        working-directory: ./terraform/infra

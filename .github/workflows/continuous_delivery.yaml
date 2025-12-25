@@ -10,8 +10,8 @@ jobs:
 
     env:
       AWS_REGION: ${{ secrets.AWS_REGION }}
-      ECR_REPO_API: "ecr-${{ vars.GROUP_NAME }}-api"
-      ECR_REPO_FRONTEND: "ecr-${{ vars.GROUP_NAME }}-frontend"
+      ECR_API_REPO: "ecr-api-${{ vars.GROUP_NAME }}"
+      ECR_FRONTEND_REPO: "ecr-frontend-${{ vars.GROUP_NAME }}"
 
     steps:
       - name: Checkout code
@@ -33,16 +33,16 @@ jobs:
           REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           TAG: latest
         run: |
-          docker build -t $REGISTRY/$ECR_REPO_API:$TAG -f Dockerfile.api .
-          docker push $REGISTRY/$ECR_REPO_API:$TAG
+          docker build -t $REGISTRY/$ECR_API_REPO:$TAG -f Dockerfile.api .
+          docker push $REGISTRY/$ECR_API_REPO:$TAG
 
       - name: Build and Push Frontend
         env:
           REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           TAG: latest
         run: |
-          docker build -t $REGISTRY/$ECR_REPO_FRONTEND:$TAG -f Dockerfile.frontend .
-          docker push $REGISTRY/$ECR_REPO_FRONTEND:$TAG
+          docker build -t $REGISTRY/$ECR_FRONTEND_REPO:$TAG -f Dockerfile.frontend .
+          docker push $REGISTRY/$ECR_FRONTEND_REPO:$TAG
 
   deploy-app-runner:
     name: Deploy App Services (Terraform)

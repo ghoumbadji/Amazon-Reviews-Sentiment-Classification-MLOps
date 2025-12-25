@@ -1,6 +1,6 @@
 # API SERVICE
 resource "aws_apprunner_service" "api_service" {
-  service_name = "api-service-${var.group_name}"
+  service_name = "service-api-${var.group_name}"
 
   source_configuration {
     authentication_configuration {
@@ -28,7 +28,7 @@ resource "aws_apprunner_service" "api_service" {
 
 # FRONTEND SERVICE
 resource "aws_apprunner_service" "frontend_service" {
-  service_name = "frontend-service-${var.group_name}"
+  service_name = "service-frontend-${var.group_name}"
 
   source_configuration {
     authentication_configuration {

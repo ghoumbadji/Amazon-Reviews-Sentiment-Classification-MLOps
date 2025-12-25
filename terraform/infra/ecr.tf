@@ -1,9 +1,9 @@
 resource "aws_ecr_repository" "api_repo" {
-  name         = "ecr-${var.group_name}-api"
+  name         = "ecr-api-${var.group_name}"
   force_delete = true
 }
 
 resource "aws_ecr_repository" "frontend_repo" {
-  name         = "ecr-${var.group_name}-frontend"
+  name         = "ecr-frontend-${var.group_name}"
   force_delete = true
 }

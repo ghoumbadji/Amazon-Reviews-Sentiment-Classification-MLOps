@@ -5,11 +5,11 @@ data "aws_s3_bucket" "data_bucket" {
 
 # Retrieve the ECR repositories created by Infra
 data "aws_ecr_repository" "api_repo" {
-  name = "ecr-${var.group_name}-api"
+  name = "ecr-api-${var.group_name}"
 }
 
 data "aws_ecr_repository" "frontend_repo" {
-  name = "ecr-${var.group_name}-frontend"
+  name = "ecr-frontend-${var.group_name}"
 }
 
 # Retrieve the IAM roles created by Infra.

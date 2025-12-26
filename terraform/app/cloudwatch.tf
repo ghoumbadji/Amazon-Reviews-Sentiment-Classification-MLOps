@@ -17,7 +17,8 @@ resource "aws_cloudwatch_dashboard" "main" {
               "Requests",
               "ServiceName",
               "service-api-${var.group_name}",
-              "ServiceId", aws_apprunner_service.api_service.service_id
+              "ServiceID",
+              aws_apprunner_service.api_service.service_id
             ]
           ]
           period = 300
@@ -41,7 +42,8 @@ resource "aws_cloudwatch_dashboard" "main" {
               "MemoryUtilization",
               "ServiceName",
               "service-api-${var.group_name}",
-              "ServiceId", aws_apprunner_service.api_service.service_id,
+              "ServiceID",
+              aws_apprunner_service.api_service.service_id,
               { "label" : "Memory (MB)" }
             ],
             # CPU on the right axis
@@ -50,7 +52,8 @@ resource "aws_cloudwatch_dashboard" "main" {
               "CPUUtilization",
               "ServiceName",
               "service-api-${var.group_name}",
-              "ServiceId", aws_apprunner_service.api_service.service_id,
+              "ServiceID",
+              aws_apprunner_service.api_service.service_id,
               { "yAxis" : "right", "label" : "CPU (%)" }
             ]
           ]
@@ -75,7 +78,7 @@ resource "aws_cloudwatch_dashboard" "main" {
               "Requests",
               "ServiceName",
               "service-frontend-${var.group_name}",
-              "ServiceId",
+              "ServiceID",
               aws_apprunner_service.frontend_service.service_id,
               { "color" : "#ff7f0e" }
             ]
